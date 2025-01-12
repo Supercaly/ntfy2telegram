@@ -13,9 +13,60 @@ Receiving messages directly on Telegram is convenient and straightforward. Many 
 
 This application is inspired by [ntfy-sh-listener](https://github.com/sanwebinfo/ntfy-sh-listener), extending it and adding more features.
 
-## Setup
+## Setup with Docker 🐳
 
-This application is intended to be used with Docker or docker compose 🐳.
+Pull the image using
+
+```console
+$ docker pull ghcr.io/supercaly/ntfy2telegram:main
+```
+
+Run the image in docker using
+
+```console
+$ docker run -d \
+    --restart always \
+    -e NTFY_WS_PROTOCOL="ws" \
+    -e NTFY_SERVER_ADDRESS="<ntfy-server-ip:port>" \
+    -e NTFY_TOPIC="<your-topic>" \
+    -e NTFY_TOKEN="<ntfy-token>" \
+    -e NTFY_USERNAME="<ntfy-username>" \
+    -e NTFY_PASSWORD="<ntfy-password>" \
+    -e TG_CHAT_ID="<telegram-chat-id>" \
+    -e TG_BOT_TOKEN="<telegram-bot-token>" \
+    --name ntfy2tg-<topic> \
+    ntfy2telegram:main
+```
+
+or with **docker compose** by creating a `compose.yaml` file:
+
+```yaml
+services:
+  server:
+    image: "ghcr.io/supercaly/ntfy2telegram:main"
+    restart: always
+
+    # define env variables directly in the compose file
+    environment:
+      - NTFY_WS_PROTOCOL="ws"
+      - NTFY_SERVER_ADDRESS="<ntfy-server-ip:port>"
+      - NTFY_TOPIC="<your-topic>"
+      - NTFY_TOKEN="<ntfy-token>"
+      - NTFY_USERNAME="<ntfy-username>"
+      - NTFY_PASSWORD="<ntfy-password>"
+      - TG_CHAT_ID="<telegram-chat-id>"
+      - TG_BOT_TOKEN="<telegram-bot-token>"
+
+    # store env variables in a separate .env file (recommended for secrets)
+    env_file:
+      - .env
+```
+
+> If you intend to use Portainer remember to substitute `.env` with `stack.env`.
+
+## Manual install
+
+This application is intended to be used with Docker but you can use it directly on your machine building it by hand.
 
 Download or Clone the repository via git
 
@@ -24,12 +75,13 @@ $ git clone https://github.com/Supercaly/ntfy2telegram
 $ cd ntfy2telegram
 ```
 
-Edit the content of the `compose.yaml` file and add all the required environment variables. 
-Then run docker compose with 
+Export the environment variables then run the application with
 
 ```console
-$ docker compose up -d
+$ python app.py
 ```
+
+If you intend in running this application permanently you should export the environment variables into your `.*rc` file ad create a systemd service that runs on boot.
 
 ## Environment Variables
 
@@ -57,6 +109,7 @@ The table below shows all the message fields supported by the application
 ## TODO
 
 - [ ] Listen for multiple topics at the same time.
+- [ ] Report the topic along with the message (useful when there are more topics sent to the same bot).
 - [ ] Handle message priority with an icon like NTFY app.
 - [ ] Handle message attachments.
 - [ ] Handle message actions.
