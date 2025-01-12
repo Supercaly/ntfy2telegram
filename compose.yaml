@@ -5,6 +5,7 @@ services:
       context: .
     container_name: "ntfy2telegram"
     restart: always
+
     # define env variables directly in the compose file
     # environment:
     #   - NTFY_WS_PROTOCOL="ws"
@@ -15,6 +16,11 @@ services:
     #   - NTFY_PASSWORD="<ntfy-password>"
     #   - TG_CHAT_ID="<telegram-chat-id>"
     #   - TG_BOT_TOKEN="<telegram-bot-token>"
+
     # store env variables in a separate .env file (recommended for secrets)
     # env_file:
       # - .env
+
+    # use stack.env file for portainer deployment
+    env_file:
+      - stack.env
