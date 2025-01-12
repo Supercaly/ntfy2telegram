@@ -1,0 +1,4 @@
+md2tgmd==0.3.9
+python-dotenv==1.0.1
+requests==2.32.3
+websocket-client==1.8.0
