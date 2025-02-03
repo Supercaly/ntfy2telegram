@@ -1,6 +1,7 @@
 import base64
 from dotenv import dotenv_values
 from emoji import rawEmojis as emoji_map
+from emoji import priorityEmojis as priority_emoji
 import json
 import logging
 from md2tgmd import escape
@@ -21,15 +22,16 @@ env = {
     **dotenv_values(".env"),
     **os.environ,
 }
-NTFY_WS_PROTOCOL =    env.get('NTFY_WS_PROTOCOL','ws')
-NTFY_SERVER_ADDRESS = env.get('NTFY_SERVER_ADDRESS')
-NTFY_TOPIC =          env.get('NTFY_TOPIC')
-NTFY_USERNAME =       env.get('NTFY_USERNAME')
-NTFY_PASSWORD =       env.get('NTFY_PASSWORD')
-NTFY_TOKEN =          env.get('NTFY_TOKEN')
-NTFY_INCLUDE_TOPIC =  env.get('NTFY_INCLUDE_TOPIC')
-TG_CHAT_ID =          env.get('TG_CHAT_ID')
-TG_BOT_TOKEN =        env.get('TG_BOT_TOKEN')
+NTFY_WS_PROTOCOL      = env.get('NTFY_WS_PROTOCOL','ws')
+NTFY_SERVER_ADDRESS   = env.get('NTFY_SERVER_ADDRESS')
+NTFY_TOPIC            = env.get('NTFY_TOPIC')
+NTFY_USERNAME         = env.get('NTFY_USERNAME')
+NTFY_PASSWORD         = env.get('NTFY_PASSWORD')
+NTFY_TOKEN            = env.get('NTFY_TOKEN')
+NTFY_INCLUDE_TOPIC    = env.get('NTFY_INCLUDE_TOPIC','False')
+NTFY_INCLUDE_PRIORITY = env.get('NTFY_INCLUDE_PRIORITY','False')
+TG_CHAT_ID            = env.get('TG_CHAT_ID')
+TG_BOT_TOKEN          = env.get('TG_BOT_TOKEN')
 
 def escape_markdown_v2(text: str) -> str:
     """
@@ -64,6 +66,7 @@ def parse_message(message) -> str:
         Return the message as a string ready for telegram.
     """
     # parse the fields from the message
+    # TODO: Manage actions and attachments
     current_topic = message.get('topic')
     title = message.get('title')
     body = message.get('message')
@@ -88,8 +91,6 @@ def parse_message(message) -> str:
             text_content += f"{current_topic}\n"
     
     # convert tags to emojis
-    # TODO: Display priority in the title
-    # TODO: Manage actions and attachments
     if len(tags) != 0:
         hasEmojis = False
         for tag in tags:
@@ -104,8 +105,16 @@ def parse_message(message) -> str:
     
     # append title
     if title is not None:
-        text_content += f"{title}\n\n"
+        text_content += f"{title} "
+
+    # convert priority to icon
+    if NTFY_INCLUDE_PRIORITY == "True":
+        text_content += priority_emoji[priority-1]
     
+    # append new line after title
+    if (title is not None) or ((NTFY_INCLUDE_PRIORITY == "True") and (priority != 3)):
+        text_content += "\n\n"
+
     # if the message has markdown text we convert it into telegram 
     # compatible MarkdownV2, otherwise we can send the text directly,
     # but first we need to escape eventual markdown characters from it

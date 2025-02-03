@@ -25,16 +25,11 @@ Run the image in docker using
 ```console
 $ docker run -d \
     --restart always \
-    -e NTFY_WS_PROTOCOL="ws" \
     -e NTFY_SERVER_ADDRESS="<ntfy-server-ip:port>" \
     -e NTFY_TOPIC="<your-topic>" \
-    -e NTFY_TOKEN="<ntfy-token>" \
-    -e NTFY_USERNAME="<ntfy-username>" \
-    -e NTFY_PASSWORD="<ntfy-password>" \
-    -e NTFY_INCLUDE_TOPIC="True" \
     -e TG_CHAT_ID="<telegram-chat-id>" \
     -e TG_BOT_TOKEN="<telegram-bot-token>" \
-    --name ntfy2tg-<topic> \
+    --name ntfy2telegram \
     ntfy2telegram:main
 ```
 
@@ -48,15 +43,11 @@ services:
 
     # define env variables directly in the compose file
     environment:
-      - NTFY_WS_PROTOCOL="ws"
       - NTFY_SERVER_ADDRESS="<ntfy-server-ip:port>"
       - NTFY_TOPIC="<your-topic>"
-      - NTFY_TOKEN="<ntfy-token>"
-      - NTFY_USERNAME="<ntfy-username>"
-      - NTFY_PASSWORD="<ntfy-password>"
-      - NTFY_INCLUDE_TOPIC="True"
       - TG_CHAT_ID="<telegram-chat-id>"
       - TG_BOT_TOKEN="<telegram-bot-token>"
+      # ... more variables
 
     # store env variables in a separate .env file (recommended for secrets)
     env_file:
@@ -95,6 +86,7 @@ If you intend in running this application permanently you should export the envi
 | NTFY_PASSWORD | No | - | Password of an existing user if ACL is enabled. As stated in [here](https://docs.ntfy.sh/publish/#username-password) the Basic Authorization takes a base64 encoded string with "<username>:<password>". If you specify both `NTFY_USERNAME` and `NTFY_PASSWORD` we will encode the string for you; otherwise you can create it yourself and pass it to `NTFY_PASSWORD` without setting `NTFY_USERNAME`. Remember that the string is only base64 encoded and it is not encrypted. |
 | NTFY_TOKEN | No | - | NTFY access token if ACL is enabled. Use this instead of `NTFY_USERNAME` and `NTFY_PASSWORD` for [added security](https://docs.ntfy.sh/config/?h=acl#access-tokens). |
 | NTFY_INCLUDE_TOPIC | No | `False` | If set to `True` will include the name of the topic with every message sent to telegram. This is useful to distinguish between different topics sent to the same chat. |
+| NTFY_INCLUDE_PRIORITY | No | `False` | If set to `True` will include an emoji representing the message priority on every message sent to telegram. |
 | TG_BOT_TOKEN | Yes | - | Token for the telegram bot. |
 | TG_CHAT_ID | Yes | - | Telegram Chat ID. Follow [this guide](https://docs.tracardi.com/qa/how_can_i_get_telegram_bot/) to obtain your token and chat id. |
 
@@ -112,7 +104,7 @@ The list below shows all the message fields supported by the application
 
 - [x] Listen for multiple topics at the same time.
 - [x] Report the topic along with the message (useful when there are more topics sent to the same bot).
-- [ ] Handle message priority with an icon like NTFY app.
+- [x] Handle message priority with an icon like NTFY app.
 - [ ] Handle message attachments.
 - [ ] Handle message actions.
 - [ ] Handle icons.
