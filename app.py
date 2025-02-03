@@ -172,8 +172,12 @@ def ws_on_message(ws, message):
     if message['event'] != 'message':
         logger.debug(f"skip message event of type '{message['event']}'")
         return
-    
-    logger.info("received new message from NTFY")
+
+    if 'topic' not in message:
+        logger.warning(f"got message without a valid topic: {message}")
+        return
+
+    logger.info(f"received new message from topic '{message['topic']}'")
     tg_msg = parse_message(message)
     telegram_send_message(tg_msg)
 
@@ -188,6 +192,7 @@ def ws_on_close(ws, close_status_code, close_msg):
 
 def ws_on_open(ws):
     logger.info(f"websocket connection to {get_ws_address()} opened!")
+    logger.info(f"listening to topics: {NTFY_TOPIC.split(',')}")
 
 ##########################
 # websocket util functions
