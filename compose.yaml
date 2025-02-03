@@ -14,13 +14,11 @@ services:
     #   - NTFY_TOKEN="<ntfy-token>"
     #   - NTFY_USERNAME="<ntfy-username>"
     #   - NTFY_PASSWORD="<ntfy-password>"
+    #   - NTFY_INCLUDE_TOPIC="True"
     #   - TG_CHAT_ID="<telegram-chat-id>"
     #   - TG_BOT_TOKEN="<telegram-bot-token>"
 
     # store env variables in a separate .env file (recommended for secrets)
-    # env_file:
-      # - .env
-
     # use stack.env file for portainer deployment
     env_file:
-      - stack.env
+      - .env

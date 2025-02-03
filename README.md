@@ -32,6 +32,7 @@ $ docker run -d \
     -e NTFY_TOKEN="<ntfy-token>" \
     -e NTFY_USERNAME="<ntfy-username>" \
     -e NTFY_PASSWORD="<ntfy-password>" \
+    -e NTFY_INCLUDE_TOPIC="True" \
     -e TG_CHAT_ID="<telegram-chat-id>" \
     -e TG_BOT_TOKEN="<telegram-bot-token>" \
     --name ntfy2tg-<topic> \
@@ -54,6 +55,7 @@ services:
       - NTFY_TOKEN="<ntfy-token>"
       - NTFY_USERNAME="<ntfy-username>"
       - NTFY_PASSWORD="<ntfy-password>"
+      - NTFY_INCLUDE_TOPIC="True"
       - TG_CHAT_ID="<telegram-chat-id>"
       - TG_BOT_TOKEN="<telegram-bot-token>"
 
@@ -62,13 +64,13 @@ services:
       - .env
 ```
 
-> If you intend to use Portainer remember to substitute `.env` with `stack.env`.
+> Note: If you intend to use **Portainer** remember to substitute `.env` with `stack.env`.
 
-## Manual install
+## Manual install 🛠️
 
-This application is intended to be used with Docker but you can use it directly on your machine building it by hand.
+This application is intended to be used with Docker but you can use it directly on your machine by building it by hand.
 
-Download or Clone the repository via git
+Download or clone the repository via git:
 
 ```console
 $ git clone https://github.com/Supercaly/ntfy2telegram
@@ -81,35 +83,36 @@ Export the environment variables then run the application with
 $ python app.py
 ```
 
-If you intend in running this application permanently you should export the environment variables into your `.*rc` file ad create a systemd service that runs on boot.
+If you intend in running this application permanently you should export the environment variables into your `.*rc` file and create a systemd service that runs on boot.
 
-## Environment Variables
+## Environment Variables 🌐
 
-| Variable | Required | Value |
-|--|--|--|
-| NTFY_WS_PROTOCOL | No | The websocket protocol to use for the connection. Can be either `ws` or `wss` (recommended `wss`). Default `ws` |
-| NTFY_SERVER_ADDRESS | Yes | Address of the NTFY server. Can be a pair ip:port or a dns name. Example `127.0.0.1:80` or `ntfy.sh:8080`. |
-| NTFY_TOPIC | Yes | NTFY topic to listen for messages. Example `test-topic`. |
-| NTFY_USERNAME | No | Username of an existing ntfy user if the server has Access Control List (ACL) enabled. [More details](https://docs.ntfy.sh/config/?h=acl#access-control-list-acl). |
-| NTFY_PASSWORD | No | Password of an existing user if ACL is enabled. As stated in [here](https://docs.ntfy.sh/publish/#username-password) the Basic Authorization takes a base64 encoded string with "<username>:<password>". If you specify both `NTFY_USERNAME` and `NTFY_PASSWORD` we will encode the string for you; otherwise you can create it yourself and pass it to `NTFY_PASSWORD` without setting `NTFY_USERNAME`. Remember that the string is only base64 encoded and it is not encrypted. |
-| NTFY_TOKEN | No | NTFY access token if ACL is enabled. Use this instead of `NTFY_USERNAME` and `NTFY_PASSWORD` for [added security](https://docs.ntfy.sh/config/?h=acl#access-tokens). |
-| TG_BOT_TOKEN | Yes | Token for the telegram bot. |
-| TG_CHAT_ID | Yes | Telegram Chat ID. Follow [this guide](https://docs.tracardi.com/qa/how_can_i_get_telegram_bot/) to obtain your token and chat id. |
+| Variable | Required | Default | Description |
+|--|--|--|--|
+| NTFY_WS_PROTOCOL | No | `ws` | The websocket protocol to use for the connection. Can be either `ws` or `wss` (recommended `wss`). |
+| NTFY_SERVER_ADDRESS | Yes | - | Address of the NTFY server. Can be a pair `ip:port` or a dns name. Example `127.0.0.1:80` or `ntfy.sh:8080`. |
+| NTFY_TOPIC | Yes | - | NTFY topic to listen for messages. Example `test-topic`. |
+| NTFY_USERNAME | No | - | Username of an existing ntfy user if the server has Access Control List (ACL) enabled. [More details](https://docs.ntfy.sh/config/?h=acl#access-control-list-acl). |
+| NTFY_PASSWORD | No | - | Password of an existing user if ACL is enabled. As stated in [here](https://docs.ntfy.sh/publish/#username-password) the Basic Authorization takes a base64 encoded string with "<username>:<password>". If you specify both `NTFY_USERNAME` and `NTFY_PASSWORD` we will encode the string for you; otherwise you can create it yourself and pass it to `NTFY_PASSWORD` without setting `NTFY_USERNAME`. Remember that the string is only base64 encoded and it is not encrypted. |
+| NTFY_TOKEN | No | - | NTFY access token if ACL is enabled. Use this instead of `NTFY_USERNAME` and `NTFY_PASSWORD` for [added security](https://docs.ntfy.sh/config/?h=acl#access-tokens). |
+| NTFY_INCLUDE_TOPIC | No | `False` | If set to `True` will include the name of the topic with every message sent to telegram. This is useful to distinguish between different topics sent to the same chat. |
+| TG_BOT_TOKEN | Yes | - | Token for the telegram bot. |
+| TG_CHAT_ID | Yes | - | Telegram Chat ID. Follow [this guide](https://docs.tracardi.com/qa/how_can_i_get_telegram_bot/) to obtain your token and chat id. |
 
-## Supported messages
+## Supported messages 🔔
 
 When [sending a message](https://docs.ntfy.sh/publish) to a ntfy topic different elements can be passed along.
-The table below shows all the message fields supported by the application
+The list below shows all the message fields supported by the application
 
 - Message title
 - Tags & Emojis (the tags matching the [emoji code list](https://docs.ntfy.sh/emojis/) are converted into emojis)
 - Markdown formatting
 - Click action
 
-## TODO
+## TODO 📋
 
 - [ ] Listen for multiple topics at the same time.
-- [ ] Report the topic along with the message (useful when there are more topics sent to the same bot).
+- [x] Report the topic along with the message (useful when there are more topics sent to the same bot).
 - [ ] Handle message priority with an icon like NTFY app.
 - [ ] Handle message attachments.
 - [ ] Handle message actions.

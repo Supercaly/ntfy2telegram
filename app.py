@@ -21,14 +21,15 @@ env = {
     **dotenv_values(".env"),
     **os.environ,
 }
-NTFY_WS_PROTOCOL = env.get('NTFY_WS_PROTOCOL','ws')
+NTFY_WS_PROTOCOL =    env.get('NTFY_WS_PROTOCOL','ws')
 NTFY_SERVER_ADDRESS = env.get('NTFY_SERVER_ADDRESS')
-NTFY_TOPIC = env.get('NTFY_TOPIC')
-NTFY_USERNAME = env.get('NTFY_USERNAME')
-NTFY_PASSWORD = env.get('NTFY_PASSWORD')
-NTFY_TOKEN = env.get('NTFY_TOKEN')
-TG_CHAT_ID = env.get('TG_CHAT_ID')
-TG_BOT_TOKEN = env.get('TG_BOT_TOKEN')
+NTFY_TOPIC =          env.get('NTFY_TOPIC')
+NTFY_USERNAME =       env.get('NTFY_USERNAME')
+NTFY_PASSWORD =       env.get('NTFY_PASSWORD')
+NTFY_TOKEN =          env.get('NTFY_TOKEN')
+NTFY_INCLUDE_TOPIC =  env.get('NTFY_INCLUDE_TOPIC')
+TG_CHAT_ID =          env.get('TG_CHAT_ID')
+TG_BOT_TOKEN =        env.get('TG_BOT_TOKEN')
 
 def escape_markdown_v2(text: str) -> str:
     """
@@ -63,6 +64,7 @@ def parse_message(message) -> str:
         Return the message as a string ready for telegram.
     """
     # parse the fields from the message
+    current_topic = message.get('topic')
     title = message.get('title')
     body = message.get('message')
     tags = message.get('tags',[])
@@ -79,6 +81,11 @@ def parse_message(message) -> str:
     # prepare full text for telegram
     text_content = ""
     non_emoji_tags=[]
+
+    # append topic name to the message
+    if NTFY_INCLUDE_TOPIC == "True":
+        if current_topic is not None:
+            text_content += f"{current_topic}\n"
     
     # convert tags to emojis
     # TODO: Display priority in the title
