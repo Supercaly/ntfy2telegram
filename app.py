@@ -42,11 +42,9 @@ class Env:
         self.ntfy_password = env_vars.get('NTFY_PASSWORD')
         self.ntfy_token = env_vars.get('NTFY_TOKEN')
         # include topic in message
-        # TODO: Convert to bool
-        self.ntfy_include_topic = env_vars.get('NTFY_INCLUDE_TOPIC','False')
+        self.ntfy_include_topic = env_vars.get('NTFY_INCLUDE_TOPIC','false').lower() == "true"
         # include priority in message
-        # TODO: Convert to bool
-        self.ntfy_include_priority = env_vars.get('NTFY_INCLUDE_PRIORITY','False')
+        self.ntfy_include_priority = env_vars.get('NTFY_INCLUDE_PRIORITY','false').lower() == "true"
 
         # Telegram chat id
         self.tg_chat_id = env_vars.get('TG_CHAT_ID')
@@ -110,7 +108,7 @@ def parse_message(message) -> str:
     """
     # parse the fields from the message
     # TODO: Manage actions and attachments
-    current_topic = message.get('topic')
+    current_topic = message.get('topic','no-topic')
     title = message.get('title')
     body = message.get('message')
     tags = message.get('tags',[])
@@ -129,9 +127,8 @@ def parse_message(message) -> str:
     non_emoji_tags=[]
 
     # append topic name to the message
-    if env.ntfy_include_topic == "True":
-        if current_topic is not None:
-            text_content += f"{current_topic}\n"
+    if env.ntfy_include_topic:
+        text_content += f"{current_topic}\n"
     
     # convert tags to emojis
     if len(tags) != 0:
@@ -151,12 +148,11 @@ def parse_message(message) -> str:
         text_content += f"{title} "
 
     # convert priority to icon
-    if env.ntfy_include_priority == "True":
+    if env.ntfy_include_priority:
         text_content += priority_emoji[priority-1]
     
     # append new line after title
-    if (title is not None) or ((env.ntfy_include_priority == "True") and (priority != 3)):
-        text_content += "\n\n"
+    text_content += "\n\n"
 
     # if the message has markdown text we convert it into telegram 
     # compatible MarkdownV2, otherwise we can send the text directly,
