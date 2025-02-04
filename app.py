@@ -17,22 +17,61 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# get environment variables
-env = {
-    **dotenv_values(".env"),
-    **os.environ,
-}
-NTFY_WS_PROTOCOL      = env.get('NTFY_WS_PROTOCOL','ws')
-NTFY_SERVER_ADDRESS   = env.get('NTFY_SERVER_ADDRESS')
-NTFY_TOPIC            = env.get('NTFY_TOPIC')
-NTFY_USERNAME         = env.get('NTFY_USERNAME')
-NTFY_PASSWORD         = env.get('NTFY_PASSWORD')
-NTFY_TOKEN            = env.get('NTFY_TOKEN')
-NTFY_INCLUDE_TOPIC    = env.get('NTFY_INCLUDE_TOPIC','False')
-NTFY_INCLUDE_PRIORITY = env.get('NTFY_INCLUDE_PRIORITY','False')
-TG_CHAT_ID            = env.get('TG_CHAT_ID')
-TG_BOT_TOKEN          = env.get('TG_BOT_TOKEN')
+class Env:
+    def load_from_env(self):
+        # combine variables from environment and .env files
+        env = {
+            **dotenv_values(".env"),
+            **os.environ,
+        }
 
+        # websocket protocol [ws,wss]
+        self.ntfy_ws_protocol = env.get('NTFY_WS_PROTOCOL', 'ws')
+        if self.ntfy_ws_protocol != "ws" and self.ntfy_ws_protocol != "wss":
+            raise Exception(f"invalid 'NTFY_WS_PROTOCOL': '{self.ntfy_ws_protocol}'")
+        # NTFY server address
+        self.ntfy_address = env.get('NTFY_SERVER_ADDRESS')
+        if self.ntfy_address is None:
+            raise Exception(f"environment variable 'NTFY_SERVER_ADDRESS' is undefined")
+        # NTFY topic
+        self.ntfy_topic = env.get('NTFY_TOPIC')
+        if self.ntfy_topic is None:
+            raise Exception(f"environment variable 'NTFY_TOPIC' is undefined")
+        # Telegram chat id
+        self.tg_chat_id = env.get('TG_CHAT_ID')
+        if self.tg_chat_id is None:
+            raise Exception(f"environment variable 'TG_CHAT_ID' is undefined")
+        # Telegram bot token
+        self.tg_token = env.get('TG_BOT_TOKEN')
+        if self.tg_token is None:
+            raise Exception(f"environment variable 'TG_BOT_TOKEN' is undefined")
+        # NTFY ACL credentials
+        self.ntfy_username = env.get('NTFY_USERNAME')
+        self.ntfy_password = env.get('NTFY_PASSWORD')
+        self.ntfy_token = env.get('NTFY_TOKEN')
+        # include topic in message
+        # TODO: Convert to bool
+        self.ntfy_include_topic = env.get('NTFY_INCLUDE_TOPIC','False')
+        # include priority in message
+        # TODO: Convert to bool
+        self.ntfy_include_priority = env.get('NTFY_INCLUDE_PRIORITY','False')
+
+    def get_ws_address(self) -> str:
+        """
+        Return the full address for the NTFY websocket.
+        """
+        return f"{self.ntfy_ws_protocol}://{self.ntfy_address}/{self.ntfy_topic}/ws"
+
+    def topic_list(self) -> list[str]:
+        """
+        Return the NTFY topics as a list
+        """
+        return self.ntfy_topic.split(',')
+env = None
+
+###################################
+# message parsing and sending utils
+###################################
 def escape_markdown_v2(text: str) -> str:
     """
     Escapes characters for MarkdownV2.
@@ -86,7 +125,7 @@ def parse_message(message) -> str:
     non_emoji_tags=[]
 
     # append topic name to the message
-    if NTFY_INCLUDE_TOPIC == "True":
+    if env.ntfy_include_topic == "True":
         if current_topic is not None:
             text_content += f"{current_topic}\n"
     
@@ -108,11 +147,11 @@ def parse_message(message) -> str:
         text_content += f"{title} "
 
     # convert priority to icon
-    if NTFY_INCLUDE_PRIORITY == "True":
+    if env.ntfy_include_priority == "True":
         text_content += priority_emoji[priority-1]
     
     # append new line after title
-    if (title is not None) or ((NTFY_INCLUDE_PRIORITY == "True") and (priority != 3)):
+    if (title is not None) or ((env.ntfy_include_priority == "True") and (priority != 3)):
         text_content += "\n\n"
 
     # if the message has markdown text we convert it into telegram 
@@ -149,14 +188,14 @@ def telegram_send_message(message: str):
         "content-type": "application/x-www-form-urlencoded"
     }
     querystring = {
-        "chat_id": TG_CHAT_ID,
+        "chat_id": env.tg_chat_id,
         "text": message,
         "parse_mode": "MarkdownV2", # Enable Markdown v2 formatting
         "link_preview_options": "{\"is_disabled\": true}" # Disable link preview
     }
     response = requests.request(
         "POST", 
-        f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage", 
+        f"https://api.telegram.org/bot{env.tg_token}/sendMessage",
         headers=headers, 
         params=querystring
     )
@@ -194,44 +233,18 @@ def ws_on_error(ws, error):
     logger.error(f"websocket error: {error.__repr__()}")
 
 def ws_on_close(ws, close_status_code, close_msg):
-    msg = f"websocket connection to {get_ws_address()} closed"
+    msg = f"websocket connection to {env.get_ws_address()} closed"
     if close_status_code is not None:
         msg += f" {close_status_code} {close_msg}"
     logger.info(msg)
 
 def ws_on_open(ws):
-    logger.info(f"websocket connection to {get_ws_address()} opened!")
-    logger.info(f"listening to topics: {NTFY_TOPIC.split(',')}")
+    logger.info(f"websocket connection to {env.get_ws_address()} opened!")
+    logger.info(f"listening to topics: {env.topic_list()}")
 
 ##########################
 # websocket util functions
 ##########################
-def get_ws_address() -> str:
-    """
-    Create the full address for the NTFY websocket.
-
-    Returns
-    -------
-    str
-        Return a string representing the full NTFY ws address.
-    """
-    return f"{NTFY_WS_PROTOCOL}://{NTFY_SERVER_ADDRESS}/{NTFY_TOPIC}/ws"
-
-def validate_env():
-    """
-    Validate the variables read from the environment.
-    """
-    if NTFY_WS_PROTOCOL != "ws" and NTFY_WS_PROTOCOL != "wss":
-        raise Exception(f"invalid environment variable {NTFY_WS_PROTOCOL=}")
-    if NTFY_SERVER_ADDRESS is None:
-        raise Exception(f"environment variable 'NTFY_SERVER_ADDRESS' is undefined") 
-    if NTFY_TOPIC is None:
-        raise Exception(f"environment variable 'NTFY_TOPIC' is undefined")
-    if TG_CHAT_ID is None:
-        raise Exception(f"environment variable 'TG_CHAT_ID' is undefined")
-    if TG_BOT_TOKEN is None:
-        raise Exception(f"environment variable 'TG_BOT_TOKEN' is undefined")
-
 def get_auth_header() -> str|None:
     """
     Compute the Authorization header for the websocket connection.
@@ -249,30 +262,38 @@ def get_auth_header() -> str|None:
         authorization is needed.
     """
     
-    if NTFY_TOKEN is not None:
-        return f"Bearer {NTFY_TOKEN}"
-    elif NTFY_PASSWORD is not None:
-        basic = NTFY_PASSWORD
-        if NTFY_USERNAME is not None:
+    if env.ntfy_token is not None:
+        # use token
+        return f"Bearer {env.ntfy_token}"
+    elif env.ntfy_password is not None:
+        # use password encoded
+        basic = env.ntfy_password
+        if env.ntfy_username is not None:
+            # encode username and password
             basic = base64.b64encode(
-                f"{NTFY_USERNAME}:{NTFY_PASSWORD}".encode('ascii')
+                f"{env.ntfy_username}:{env.ntfy_password}".encode('ascii')
             ).decode('ascii')
         return f"Basic {basic}"
+    # no auth
     return None
 
 if __name__ == "__main__":
-    validate_env()
+    # create app context
+    env = Env()
+    env.load_from_env()
 
+    # create websocket headers
     header = {}
     auth_header = get_auth_header()
     if auth_header is not None:
         header['Authorization'] = auth_header
 
-    logger.info(f"connecting to '{get_ws_address()}'")
+    # connect websocket
+    logger.info(f"connecting to '{env.get_ws_address()}'")
     # websocket.enableTrace(True)
     websocket.setdefaulttimeout(5)
     ws_app = websocket.WebSocketApp(
-        get_ws_address(),
+        env.get_ws_address(),
         on_open=ws_on_open,
         on_message=ws_on_message,
         on_error=ws_on_error,
