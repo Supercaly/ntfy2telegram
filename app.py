@@ -15,46 +15,50 @@ logging.basicConfig(
     format='%(asctime)s: %(levelname)s: %(message)s',
 )
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
+# global environment
 class Env:
     def load_from_env(self):
         # combine variables from environment and .env files
-        env = {
+        env_vars = {
             **dotenv_values(".env"),
             **os.environ,
         }
 
-        # websocket protocol [ws,wss]
-        self.ntfy_ws_protocol = env.get('NTFY_WS_PROTOCOL', 'ws')
+        # NTFY websocket protocol [ws,wss]
+        self.ntfy_ws_protocol = env_vars.get('NTFY_WS_PROTOCOL', 'ws')
         if self.ntfy_ws_protocol != "ws" and self.ntfy_ws_protocol != "wss":
             raise Exception(f"invalid 'NTFY_WS_PROTOCOL': '{self.ntfy_ws_protocol}'")
         # NTFY server address
-        self.ntfy_address = env.get('NTFY_SERVER_ADDRESS')
+        self.ntfy_address = env_vars.get('NTFY_SERVER_ADDRESS')
         if self.ntfy_address is None:
             raise Exception(f"environment variable 'NTFY_SERVER_ADDRESS' is undefined")
         # NTFY topic
-        self.ntfy_topic = env.get('NTFY_TOPIC')
+        self.ntfy_topic = env_vars.get('NTFY_TOPIC')
         if self.ntfy_topic is None:
             raise Exception(f"environment variable 'NTFY_TOPIC' is undefined")
+        # NTFY ACL credentials
+        self.ntfy_username = env_vars.get('NTFY_USERNAME')
+        self.ntfy_password = env_vars.get('NTFY_PASSWORD')
+        self.ntfy_token = env_vars.get('NTFY_TOKEN')
+        # include topic in message
+        # TODO: Convert to bool
+        self.ntfy_include_topic = env_vars.get('NTFY_INCLUDE_TOPIC','False')
+        # include priority in message
+        # TODO: Convert to bool
+        self.ntfy_include_priority = env_vars.get('NTFY_INCLUDE_PRIORITY','False')
+
         # Telegram chat id
-        self.tg_chat_id = env.get('TG_CHAT_ID')
+        self.tg_chat_id = env_vars.get('TG_CHAT_ID')
         if self.tg_chat_id is None:
             raise Exception(f"environment variable 'TG_CHAT_ID' is undefined")
         # Telegram bot token
-        self.tg_token = env.get('TG_BOT_TOKEN')
+        self.tg_token = env_vars.get('TG_BOT_TOKEN')
         if self.tg_token is None:
             raise Exception(f"environment variable 'TG_BOT_TOKEN' is undefined")
-        # NTFY ACL credentials
-        self.ntfy_username = env.get('NTFY_USERNAME')
-        self.ntfy_password = env.get('NTFY_PASSWORD')
-        self.ntfy_token = env.get('NTFY_TOKEN')
-        # include topic in message
-        # TODO: Convert to bool
-        self.ntfy_include_topic = env.get('NTFY_INCLUDE_TOPIC','False')
-        # include priority in message
-        # TODO: Convert to bool
-        self.ntfy_include_priority = env.get('NTFY_INCLUDE_PRIORITY','False')
+
+        # app log level
+        self.log_level = env_vars.get('LOG_LEVEL','INFO')
 
     def get_ws_address(self) -> str:
         """
@@ -277,10 +281,16 @@ def get_auth_header() -> str|None:
     # no auth
     return None
 
+###############
+# main function
+###############
 if __name__ == "__main__":
     # create app context
     env = Env()
     env.load_from_env()
+
+    # set log level
+    logger.setLevel(env.log_level)
 
     # create websocket headers
     header = {}

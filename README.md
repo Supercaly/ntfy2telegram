@@ -79,6 +79,7 @@ If you intend in running this application permanently you should export the envi
 
 | Variable | Required | Default | Description |
 |--|--|--|--|
+| LOG_LEVEL | No | `INFO` | Control the log level of the application. Should be one of `NOTSET`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`. |
 | NTFY_WS_PROTOCOL | No | `ws` | The websocket protocol to use for the connection. Can be either `ws` or `wss` (recommended `wss`). |
 | NTFY_SERVER_ADDRESS | Yes | - | Address of the NTFY server. Can be a pair `ip:port` or a dns name. Example `127.0.0.1:80` or `ntfy.sh:8080`. |
 | NTFY_TOPIC | Yes | - | Comma-separated list of NTFY topic to listen for messages. Example `topic1,topic2,topic3`. |

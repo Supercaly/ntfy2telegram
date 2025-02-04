@@ -8,13 +8,8 @@ services:
 
     # define env variables directly in the compose file
     # environment:
-    #   - NTFY_WS_PROTOCOL="ws"
     #   - NTFY_SERVER_ADDRESS="<ntfy-server-ip:port>"
     #   - NTFY_TOPIC="<your-topic>"
-    #   - NTFY_TOKEN="<ntfy-token>"
-    #   - NTFY_USERNAME="<ntfy-username>"
-    #   - NTFY_PASSWORD="<ntfy-password>"
-    #   - NTFY_INCLUDE_TOPIC="True"
     #   - TG_CHAT_ID="<telegram-chat-id>"
     #   - TG_BOT_TOKEN="<telegram-bot-token>"
 
