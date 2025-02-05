@@ -145,7 +145,7 @@ def parse_message(message) -> str:
     
     # append title
     if title is not None:
-        text_content += f"{title} "
+        text_content += f"{escape_markdown_v2(title)} "
 
     # convert priority to icon
     if env.ntfy_include_priority:
